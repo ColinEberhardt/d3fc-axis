@@ -49,12 +49,13 @@ export default () => {
 
     const axis = (selection) => {
 
-        selection.each(function(data, index) {
+        selection.each((data, index, group) => {
 
+            const element = group[index];
             const scale = ticks.scale();
 
-            const container = select(this);
-            if (!this.__chart__) {
+            const container = select(element);
+            if (!element.__chart__) {
                 container
                     .attr('fill', 'none')
                     .attr('font-size', 10)
@@ -63,8 +64,8 @@ export default () => {
             }
 
             // Stash a snapshot of the new scale, and retrieve the old snapshot.
-            const scaleOld = this.__chart__ || scale;
-            this.__chart__ = scale.copy();
+            const scaleOld = element.__chart__ || scale;
+            element.__chart__ = scale.copy();
 
             const ticksArray = ticks();
             const tickFormatter = tickFormat == null ? tryApply('tickFormat', identity) : tickFormat;
