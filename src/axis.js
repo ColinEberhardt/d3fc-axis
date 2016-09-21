@@ -53,6 +53,15 @@ export default () => {
 
             const scale = ticks.scale();
 
+            const container = select(this);
+            if (!this.__chart__) {
+                container
+                    .attr('fill', 'none')
+                    .attr('font-size', 10)
+                    .attr('font-family', 'sans-serif')
+                    .attr('text-anchor', orient === 'right' ? 'start' : orient === 'left' ? 'end' : 'middle');
+            }
+
             // Stash a snapshot of the new scale, and retrieve the old snapshot.
             const scaleOld = this.__chart__ || scale;
             this.__chart__ = scale.copy();
@@ -60,7 +69,6 @@ export default () => {
             const ticksArray = ticks();
             const tickFormatter = tickFormat == null ? tryApply('tickFormat', identity) : tickFormat;
             const sign = orient === 'bottom' || orient === 'right' ? 1 : -1;
-            const container = select(this);
 
             // add the domain line
             const range = scaleRange(scale);
@@ -73,7 +81,8 @@ export default () => {
 
             const domainLine = domainPathDataJoin(container, [data]);
             domainLine
-                .attr('d', svgDomainLine(domainPathData));
+                .attr('d', svgDomainLine(domainPathData))
+                .attr('stroke', '#000');
 
             const g = dataJoin(container, ticksArray);
 
@@ -85,16 +94,16 @@ export default () => {
                     // scales the tick will not exist on the old scale, so use the current position
                     'transform', containerTranslate(isOrdinal(scale) ? scale : scaleOld, translate)
                 )
-                .append('path');
+                .append('path')
+                .attr('stroke', '#000');
 
             var labelOffset = sign * (innerTickSize + tickPadding);
             g.enter()
                 .append('text')
-                .attr('transform', translate(0, labelOffset));
+                .attr('transform', translate(0, labelOffset))
+                .attr('fill', '#000');
 
             // update
-            g.attr('class', 'tick orient-' + orient);
-
             g.attr('transform', containerTranslate(scale, translate));
 
             g.select('path')
@@ -188,4 +197,4 @@ export default () => {
     rebindAll(axis, ticks);
 
     return axis;
-}
+};
