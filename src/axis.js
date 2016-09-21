@@ -1,46 +1,13 @@
 import _ticks from './ticks';
+import { scaleRange, isOrdinal } from './scale';
 import { select } from 'd3-selection';
 import { line } from 'd3-shape';
 import { dataJoin as _dataJoin } from 'd3fc-data-join';
 import { rebindAll } from 'd3fc-rebind';
 
-function isOrdinal(scale) {
-    return scale.rangeExtent;
-}
-
-// ordinal axes have a rangeExtent function, this adds any padding that
-// was applied to the range. This functions returns the rangeExtent
-// if present, or range otherwise
-//
-// NOTE: d3 uses very similar logic here:
-// https://github.com/mbostock/d3/blob/5b981a18db32938206b3579248c47205ecc94123/src/scale/scale.js#L8
-function scaleRange(scale) {
-    // for non ordinal, simply return the range
-    if (!isOrdinal(scale)) {
-        return scale.range();
-    }
-
-    // For ordinal, use the rangeExtent. However, rangeExtent always provides
-    // a non inverted range (i.e. extent[0] < extent[1]) regardless of the
-    // range set on the scale. The logic below detects the inverted case.
-    //
-    // The d3 code that tackles the same issue doesn't have to deal with the inverted case.
-    var scaleRange = scale.range();
-    var extent = scale.rangeExtent();
-    if (scaleRange.length <= 1) {
-        // we cannot detect the inverted case if the range (and domain) has
-        // a single item in it.
-        return extent;
-    }
-
-    var inverted = scaleRange[0] > scaleRange[1];
-    return inverted ? [extent[1], extent[0]] : extent;
-}
-
 const identity = (d) => d;
 
-// A drop-in replacement for the D3 axis, supporting the decorate pattern.
-export default function() {
+export default () => {
 
     let decorate = () => {};
     let orient = 'bottom';
@@ -48,8 +15,9 @@ export default function() {
     let outerTickSize = 6;
     let innerTickSize = 6;
     let tickPadding = 3;
-    let svgDomainLine = line();
-    let ticks = _ticks();
+
+    const svgDomainLine = line();
+    const ticks = _ticks();
 
     const dataJoin = _dataJoin('g', 'tick')
         .key(identity);
@@ -58,68 +26,56 @@ export default function() {
 
     // returns a function that creates a translation based on
     // the bound data
-    function containerTranslate(s, trans) {
-        return function(d) {
-            return trans(s(d), 0);
-        };
-    }
+    const containerTranslate = (s, trans) =>
+        d => trans(s(d), 0);
 
-    function translate(x, y) {
-        if (isVertical()) {
-            return 'translate(' + y + ', ' + x + ')';
-        } else {
-            return 'translate(' + x + ', ' + y + ')';
-        }
-    }
+    const translate = (x, y) =>
+        isVertical()
+            ? `translate(${y}, ${x})`
+            : `translate(${x}, ${y})`;
 
-    function pathTranspose(arr) {
-        if (isVertical()) {
-            return arr.map(function(d) {
-                return [d[1], d[0]];
-            });
-        } else {
-            return arr;
-        }
-    }
+    const pathTranspose = (arr) =>
+        isVertical()
+           ? arr.map(d => [d[1], d[0]])
+           : arr;
 
-    function isVertical() {
-        return orient === 'left' || orient === 'right';
-    }
+    const isVertical = () =>
+        orient === 'left' || orient === 'right';
 
-    function tryApply(fn, defaultVal) {
-        var scale = ticks.scale();
+    const tryApply = (fn, defaultVal) => {
+        const scale = ticks.scale();
         return scale[fn] ? scale[fn].apply(scale, ticks.ticks()) : defaultVal;
-    }
+    };
 
-    const axis = function(selection) {
+    const axis = (selection) => {
 
         selection.each(function(data, index) {
 
-            var scale = ticks.scale();
+            const scale = ticks.scale();
 
             // Stash a snapshot of the new scale, and retrieve the old snapshot.
-            var scaleOld = this.__chart__ || scale;
+            const scaleOld = this.__chart__ || scale;
             this.__chart__ = scale.copy();
 
-            var ticksArray = ticks();
-            var tickFormatter = tickFormat == null ? tryApply('tickFormat', identity) : tickFormat;
-            var sign = orient === 'bottom' || orient === 'right' ? 1 : -1;
-            var container = select(this);
+            const ticksArray = ticks();
+            const tickFormatter = tickFormat == null ? tryApply('tickFormat', identity) : tickFormat;
+            const sign = orient === 'bottom' || orient === 'right' ? 1 : -1;
+            const container = select(this);
 
             // add the domain line
-            var range = scaleRange(scale);
-            var domainPathData = pathTranspose([
+            const range = scaleRange(scale);
+            const domainPathData = pathTranspose([
                 [range[0], sign * outerTickSize],
                 [range[0], 0],
                 [range[1], 0],
                 [range[1], sign * outerTickSize]
             ]);
 
-            var domainLine = domainPathDataJoin(container, [data]);
+            const domainLine = domainPathDataJoin(container, [data]);
             domainLine
                 .attr('d', svgDomainLine(domainPathData));
 
-            var g = dataJoin(container, ticksArray);
+            const g = dataJoin(container, ticksArray);
 
             // enter
             g.enter()
@@ -142,16 +98,16 @@ export default function() {
             g.attr('transform', containerTranslate(scale, translate));
 
             g.select('path')
-                .attr('d', function(d) {
-                    return svgDomainLine(pathTranspose([
+                .attr('d',
+                    (d) => svgDomainLine(pathTranspose([
                         [0, 0], [0, sign * innerTickSize]
-                    ]));
-                });
+                    ]))
+                );
 
             g.select('text')
                .attr('transform', translate(0, labelOffset))
-               .attr('dy', function() {
-                   var offset = '0em';
+               .attr('dy', () => {
+                   let offset = '0em';
                    if (isVertical()) {
                        offset = '0.32em';
                    } else if (orient === 'bottom') {
