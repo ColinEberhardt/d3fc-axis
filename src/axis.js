@@ -7,17 +7,17 @@ import { rebindAll } from 'd3fc-rebind';
 
 const identity = (d) => d;
 
-export default () => {
+const axis = (orient, scale) => {
 
     let decorate = () => {};
-    let orient = 'bottom';
     let tickFormat = null;
     let outerTickSize = 6;
     let innerTickSize = 6;
     let tickPadding = 3;
 
     const svgDomainLine = line();
-    const ticks = _ticks();
+    const ticks = _ticks()
+      .scale(scale);
 
     const dataJoin = _dataJoin('g', 'tick')
         .key(identity);
@@ -179,14 +179,6 @@ export default () => {
         return axis;
     };
 
-    axis.orient = (...args) => {
-        if (!args.length) {
-            return orient;
-        }
-        orient = args[0];
-        return axis;
-    };
-
     axis.decorate = (...args) => {
         if (!args.length) {
             return decorate;
@@ -199,3 +191,11 @@ export default () => {
 
     return axis;
 };
+
+export const axisTop = (scale) => axis('top', scale);
+
+export const axisBottom = (scale) => axis('bottom', scale);
+
+export const axisLeft = (scale) => axis('left', scale);
+
+export const axisRight = (scale) => axis('right', scale);

@@ -2,8 +2,7 @@ var scale = d3.scaleLinear()
     .domain([0, 100])
     .range([0, 1000]);
 
-var axis = fc.axis()
-  .scale(scale);
+var axis = fc.axisBottom(scale);
 
 var d3Axis = d3.axisBottom(scale);
 
