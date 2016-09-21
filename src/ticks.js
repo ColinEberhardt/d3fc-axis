@@ -12,27 +12,27 @@ export default () => {
     const ticks = () =>
         tickValues == null ? tryApply('ticks', scale.domain()) : tickValues;
 
-    ticks.scale = function(x) {
-        if (!arguments.length) {
+    ticks.scale = (...args) => {
+        if (!args.length) {
             return scale;
         }
-        scale = x;
+        scale = args[0];
         return ticks;
     };
 
-    ticks.ticks = function(x) {
-        if (!arguments.length) {
+    ticks.ticks = (...args) => {
+        if (!args.length) {
             return tickArguments;
         }
-        tickArguments = arguments;
+        tickArguments = args[0];
         return ticks;
     };
 
-    ticks.tickValues = function(x) {
-        if (!arguments.length) {
+    ticks.tickValues = (...args) => {
+        if (!args.length) {
             return tickValues;
         }
-        tickValues = x;
+        tickValues = args[0];
         return ticks;
     };
 

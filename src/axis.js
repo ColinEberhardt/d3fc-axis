@@ -127,61 +127,61 @@ export default () => {
         });
     };
 
-    axis.tickFormat = function(x) {
-        if (!arguments.length) {
+    axis.tickFormat = (...args) => {
+        if (!args.length) {
             return tickFormat;
         }
-        tickFormat = x;
+        tickFormat = args[0];
         return axis;
     };
 
-    axis.tickSize = function(x) {
-        var n = arguments.length;
+    axis.tickSize = (...args) => {
+        var n = args.length;
         if (!n) {
             return innerTickSize;
         }
-        innerTickSize = Number(x);
-        outerTickSize = Number(arguments[n - 1]);
+        innerTickSize = Number(args[0]);
+        outerTickSize = Number(args[n - 1]);
         return axis;
     };
 
-    axis.innerTickSize = function(x) {
-        if (!arguments.length) {
+    axis.innerTickSize = (...args) => {
+        if (!args.length) {
             return innerTickSize;
         }
-        innerTickSize = Number(x);
+        innerTickSize = Number(args[0]);
         return axis;
     };
 
-    axis.outerTickSize = function(x) {
-        if (!arguments.length) {
+    axis.outerTickSize = (...args) => {
+        if (!args.length) {
             return outerTickSize;
         }
-        outerTickSize = Number(x);
+        outerTickSize = Number(args[0]);
         return axis;
     };
 
-    axis.tickPadding = function(x) {
-        if (!arguments.length) {
+    axis.tickPadding = (...args) => {
+        if (!args.length) {
             return tickPadding;
         }
-        tickPadding = x;
+        tickPadding = args[0];
         return axis;
     };
 
-    axis.orient = function(x) {
-        if (!arguments.length) {
+    axis.orient = (...args) => {
+        if (!args.length) {
             return orient;
         }
-        orient = x;
+        orient = args[0];
         return axis;
     };
 
-    axis.decorate = function(x) {
-        if (!arguments.length) {
+    axis.decorate = (...args) => {
+        if (!args.length) {
             return decorate;
         }
-        decorate = x;
+        decorate = args[0];
         return axis;
     };
 
