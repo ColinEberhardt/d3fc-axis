@@ -1,23 +1,20 @@
-import _ticks from './ticks';
-import { scaleRange, isOrdinal } from './scale';
 import { select } from 'd3-selection';
 import { line } from 'd3-shape';
 import { dataJoin as _dataJoin } from 'd3fc-data-join';
-import { rebindAll } from 'd3fc-rebind';
 
 const identity = (d) => d;
 
 const axis = (orient, scale) => {
 
+    let tickArguments = [10];
+    let tickValues = null;
     let decorate = () => {};
     let tickFormat = null;
-    let outerTickSize = 6;
-    let innerTickSize = 6;
+    let tickSizeOuter = 6;
+    let tickSizeInner = 6;
     let tickPadding = 3;
 
     const svgDomainLine = line();
-    const ticks = _ticks()
-      .scale(scale);
 
     const dataJoin = _dataJoin('g', 'tick')
         .key(identity);
@@ -26,8 +23,16 @@ const axis = (orient, scale) => {
 
     // returns a function that creates a translation based on
     // the bound data
-    const containerTranslate = (s, trans) =>
-        d => trans(s(d), 0);
+    const containerTranslate = (scale, trans) => {
+        let offset = 0;
+        if (scale.bandwidth) {
+            offset = scale.bandwidth() / 2;
+            if (scale.round()) {
+                offset = Math.round(offset);
+            }
+        }
+        return d => trans(scale(d) + offset, 0);
+    };
 
     const translate = (x, y) =>
         isVertical()
@@ -42,17 +47,14 @@ const axis = (orient, scale) => {
     const isVertical = () =>
         orient === 'left' || orient === 'right';
 
-    const tryApply = (fn, defaultVal) => {
-        const scale = ticks.scale();
-        return scale[fn] ? scale[fn].apply(scale, ticks.ticks()) : defaultVal;
-    };
+    const tryApply = (fn, args, defaultVal) =>
+        scale[fn] ? scale[fn].apply(scale, args) : defaultVal;
 
     const axis = (selection) => {
 
         selection.each((data, index, group) => {
 
             const element = group[index];
-            const scale = ticks.scale();
 
             const container = select(element);
             if (!element.__chart__) {
@@ -67,17 +69,17 @@ const axis = (orient, scale) => {
             const scaleOld = element.__chart__ || scale;
             element.__chart__ = scale.copy();
 
-            const ticksArray = ticks();
-            const tickFormatter = tickFormat == null ? tryApply('tickFormat', identity) : tickFormat;
+            const ticksArray = tickValues == null ? tryApply('ticks', tickArguments, scale.domain()) : tickValues;
+            const tickFormatter = tickFormat == null ? tryApply('tickFormat', tickArguments, identity) : tickFormat;
             const sign = orient === 'bottom' || orient === 'right' ? 1 : -1;
 
             // add the domain line
-            const range = scaleRange(scale);
+            const range = scale.range();
             const domainPathData = pathTranspose([
-                [range[0], sign * outerTickSize],
+                [range[0], sign * tickSizeOuter],
                 [range[0], 0],
                 [range[1], 0],
-                [range[1], sign * outerTickSize]
+                [range[1], sign * tickSizeOuter]
             ]);
 
             const domainLine = domainPathDataJoin(container, [data]);
@@ -93,12 +95,12 @@ const axis = (orient, scale) => {
                     // set the initial tick position based on the previous scale
                     // in order to get the correct enter transition - however, for ordinal
                     // scales the tick will not exist on the old scale, so use the current position
-                    'transform', containerTranslate(isOrdinal(scale) ? scale : scaleOld, translate)
+                    'transform', containerTranslate(scale.bandwidth ? scale : scaleOld, translate)
                 )
                 .append('path')
                 .attr('stroke', '#000');
 
-            var labelOffset = sign * (innerTickSize + tickPadding);
+            var labelOffset = sign * (tickSizeInner + tickPadding);
             g.enter()
                 .append('text')
                 .attr('transform', translate(0, labelOffset))
@@ -110,7 +112,7 @@ const axis = (orient, scale) => {
             g.select('path')
                 .attr('d',
                     (d) => svgDomainLine(pathTranspose([
-                        [0, 0], [0, sign * innerTickSize]
+                        [0, 0], [0, sign * tickSizeInner]
                     ]))
                 );
 
@@ -128,7 +130,7 @@ const axis = (orient, scale) => {
                .text(tickFormatter);
 
             // exit - for non ordinal scales, exit by animating the tick to its new location
-            if (!isOrdinal(scale)) {
+            if (!scale.bandwidth) {
                 g.exit()
                     .attr('transform', containerTranslate(scale, translate));
             }
@@ -146,28 +148,26 @@ const axis = (orient, scale) => {
     };
 
     axis.tickSize = (...args) => {
-        var n = args.length;
-        if (!n) {
-            return innerTickSize;
+        if (!args.length) {
+            return tickSizeInner;
         }
-        innerTickSize = Number(args[0]);
-        outerTickSize = Number(args[n - 1]);
+        tickSizeInner = tickSizeOuter = Number(args[0]);
         return axis;
     };
 
-    axis.innerTickSize = (...args) => {
+    axis.tickSizeInner = (...args) => {
         if (!args.length) {
-            return innerTickSize;
+            return tickSizeInner;
         }
-        innerTickSize = Number(args[0]);
+        tickSizeInner = Number(args[0]);
         return axis;
     };
 
-    axis.outerTickSize = (...args) => {
+    axis.tickSizeOuter = (...args) => {
         if (!args.length) {
-            return outerTickSize;
+            return tickSizeOuter;
         }
-        outerTickSize = Number(args[0]);
+        tickSizeOuter = Number(args[0]);
         return axis;
     };
 
@@ -187,7 +187,34 @@ const axis = (orient, scale) => {
         return axis;
     };
 
-    rebindAll(axis, ticks);
+    axis.scale = (...args) => {
+        if (!args.length) {
+            return scale;
+        }
+        scale = args[0];
+        return axis;
+    };
+
+    axis.ticks = (...args) => {
+        tickArguments = [...args];
+        return axis;
+    };
+
+    axis.tickArguments = (...args) => {
+        if (!args.length) {
+            return tickArguments.slice();
+        }
+        tickArguments = args[0] == null ? [] : [...args[0]];
+        return axis;
+    };
+
+    axis.tickValues = (...args) => {
+        if (!args.length) {
+            return tickValues.slice();
+        }
+        tickValues = args[0] == null ? [] : [...args[0]];
+        return axis;
+    };
 
     return axis;
 };
