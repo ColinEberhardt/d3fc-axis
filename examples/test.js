@@ -53,5 +53,5 @@ function linearScale() {
         .call(fc.axisBottom(scale).tickFormat(d3.format(',.0f')));
 }
 
-//bandScale();
+bandScale();
 linearScale();

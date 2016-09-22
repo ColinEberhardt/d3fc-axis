@@ -1,6 +1,6 @@
 {
   "name": "d3fc-axis",
-  "description": "TODO",
+  "description": "A drop-in replacement for d3 axis, with support for the d3fc decorate pattern",
   "license": "MIT",
   "keywords": [
     "d3",
@@ -22,7 +22,8 @@
   "devDependencies": {
     "babel-polyfill": "^6.13.0",
     "d3": "^4.2.5",
-    "d3fc-scripts": "^1.4.2"
+    "d3fc-scripts": "^1.4.2",
+    "webshot": "^0.18.0"
   },
   "dependencies": {
     "d3-scale": "^1.0.3",

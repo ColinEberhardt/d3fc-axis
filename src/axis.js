@@ -65,10 +65,6 @@ const axis = (orient, scale) => {
                     .attr('text-anchor', orient === 'right' ? 'start' : orient === 'left' ? 'end' : 'middle');
             }
 
-            // Stash a snapshot of the new scale, and retrieve the old snapshot.
-            const scaleOld = element.__chart__ || scale;
-            element.__chart__ = scale.copy();
-
             const ticksArray = tickValues == null ? tryApply('ticks', tickArguments, scale.domain()) : tickValues;
             const tickFormatter = tickFormat == null ? tryApply('tickFormat', tickArguments, identity) : tickFormat;
             const sign = orient === 'bottom' || orient === 'right' ? 1 : -1;
@@ -91,24 +87,16 @@ const axis = (orient, scale) => {
 
             // enter
             g.enter()
-                .attr(
-                    // set the initial tick position based on the previous scale
-                    // in order to get the correct enter transition - however, for ordinal
-                    // scales the tick will not exist on the old scale, so use the current position
-                    'transform', containerTranslate(scale.bandwidth ? scale : scaleOld, translate)
-                )
                 .append('path')
                 .attr('stroke', '#000');
 
-            var labelOffset = sign * (tickSizeInner + tickPadding);
+            const labelOffset = sign * (tickSizeInner + tickPadding);
             g.enter()
                 .append('text')
                 .attr('transform', translate(0, labelOffset))
                 .attr('fill', '#000');
 
             // update
-            g.attr('transform', containerTranslate(scale, translate));
-
             g.select('path')
                 .attr('d',
                     (d) => svgDomainLine(pathTranspose([
@@ -129,11 +117,7 @@ const axis = (orient, scale) => {
                })
                .text(tickFormatter);
 
-            // exit - for non ordinal scales, exit by animating the tick to its new location
-            if (!scale.bandwidth) {
-                g.exit()
-                    .attr('transform', containerTranslate(scale, translate));
-            }
+            g.attr('transform', containerTranslate(scale, translate));
 
             decorate(g, data, index);
         });

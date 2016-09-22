@@ -1,121 +1,79 @@
-# d3fc-extent
+# d3fc-axis
 
-Extends the D3 extent functionality (found in [d3-array](https://github.com/d3/d3-array#extent)) to allow padding, multiple accessors and date support
+A drop-in replacement for d3 axis, with support for the d3fc decorate pattern.
 
 [Main d3fc package](https://github.com/ScottLogic/d3fc)
 
 ## Installing
 
 ```bash
-npm install d3fc-extent
+npm install d3fc-axis
 ```
 
 ## API Reference
 
-* [Linear](#linear)
-* [Date](#date)
+This is a drop-in replacement for [d3-axis](https://github.com/d3/d3-axis), so please refer to that project for detailed documentation.
 
+## Decorate pattern
 
-### Linear
+Components that implement the decorate pattern expose a `decorate` property which is passed the data join selection used to construct the component's DOM. This allows users of the component to add extra logic to the enter, update and exit selections.
 
-Calculates the extent of an array of data which can be used to set the range on a scale. Can also optionally pad the data in various ways as described below. Internally makes use of `d3-array`'s [`min`](https://github.com/d3/d3-array#min) and [`max`](https://github.com/d3/d3-array#max) methods.
+For further details, consult the [Decorate Pattern documentation](https://d3fc.io/components/introduction/decorate-pattern.html).
 
-```javascript
+### Examples
 
-import extentLinear from 'd3fc-extent';
-
-const data = [{ x: 1 }, { x: 2 }, { x: 4 }, { x: 8 }, { x: 16 }];
-
-const extent = extentLinear()
-  .accessors([d => d.x])
-  .pad([1, 4])
-  .padUnit('domain');
-
-extent(data);
-
-// [0, 20]
+The decorate pattern can be used to rotate the tick labels:
 
 ```
+const scale = d3.scaleBand()
+  .domain(['Carrots', 'Bananas', 'Sausages', 'Pickles', 'Aubergines', 'Artichokes', 'Spinach', 'Cucumber'])
+  .range([0, 400]);
 
-<a name="linear_padUnit" href="#linear"></a> fc.**extentLinear**()
-
-Constructs a new linear extent calculator.
-
-<a name="linear_accessors" href="#linear_accessors"></a> *linear*.**accessors**([*accessors*])
-
-If *accessors* is specified, sets the array of value accessors to the specified array and returns this extent instance. The accessors are applied to each data value before computing the extent. The value returned be the accessors must be a scalar value or an array of scalar values. Defaults to an identity function (i.e. `d => d`).
-If *accessors* is not specified, returns the current array of value accessors, which defaults `[]`.
-
-<a name="linear_pad" href="#linear_pad"></a> *linear*.**pad**([*values*])
-
-If *values* is specified, sets the amount of padding applied to the minimum and maximum values of the extent, to the specified array `[minPad, maxPad]` and returns this extent instance. The unit of these values is set by [padUnit](#linear_padUnit).
-If *values* is not specified, returns the current array of padding values, which defaults `[0, 0]`.
-
-<a name="linear_padUnit" href="#linear_padUnit"></a> *linear*.**padUnit**([*value*])
-
-If *value* is specified, sets the unit of the [pad](#linear_pad) values applied to minimum and maximum values and returns this extent instance. Possible values are -
-* 'percent' - the default behavior of applying the values as a percentage of the extent e.g. pad values of `[0.5, 0.5]` would double the calculated extent.
-* 'domain' - the padding values specified are applied directly to the calculated extent.
-If *value* is not specified, returns the current array of padding unit, which defaults `percent`.
-
-<a name="linear_symmetricalAbout" href="#linear_symmetricalAbout"></a> *linear*.**symmetricalAbout**([*value*])
-
-If *value* is specified, sets the value around which the extent will be centered around and returns this extent instance. Can also be set to `null` to disable centering. Note this is applied before padding.
-If *value* is not specified, returns the current center value, which defaults `null`.
-
-<a name="linear_include" href="#linear_include"></a> *linear*.**include**([*values*])
-
-If *values* is specified, sets the array of additional values to include within the calculated extent to the specified array and returns this extent instance. This allows for always including an origin (e.g. `[0]`) or specifying a minimum extent to always be displayed (e.g. `[10, 20]`).
-Note included values are applied before [symmetricalAbout](#linear_symmetricalAbout).
-If *values* is not specified, returns the current array of included values, which defaults `[]`.
-
-### Date
-
-Calculates the extent of an array of data which can be used to set the range on a scale. Can also optionally pad the data in various ways as described below. Equivalent in functionality to [linear](#linear) but for `Date` values.
-
-```javascript
-
-import extentDate from 'd3fc-extent';
-
-const data = [{ x: new Date(2016, 0, 1) }, { x: new Date(2016, 0, 11) }];
-
-const extent = extentDate()
-  .accessors([d => d.x])
-  .pad([0, 0.2]);
-
-extent(data);
-
-// [ 2016-01-01T00:00:00.000Z, 2016-01-13T00:00:00.000Z ]
-
+const axis = fc.axisBottom(scale)
+  .decorate(s =>
+      s.enter().select('text')
+        .style('text-anchor', 'start')
+        .attr('transform', 'rotate(45 -10 10)')
+  );
 ```
 
-<a name="date_padUnit" href="#date"></a> fc.**extentDate**()
+<img src="screenshots/rotate.png"/>
 
-Constructs a new date extent calculator.
+Or alternatively the tick index can be used to offset alternating labels:
 
-<a name="date_accessors" href="#date_accessors"></a> *date*.**accessors**([*accessors*])
+```
+const scale = d3.scaleBand()
+  .domain(['Carrots', 'Bananas', 'Sausages', 'Pickles', 'Aubergines', 'Artichokes', 'Spinach', 'Cucumber'])
+  .range([0, 400]);
 
-If *accessors* is specified, sets the array of value accessors to the specified array and returns this extent instance. The accessors are applied to each data value before computing the extent. The value returned be the accessors must be a `Date` or an array of `Date`s. Defaults to an identity function (i.e. `d => d`).
-If *accessors* is not specified, returns the current array of value accessors, which defaults `[]`.
+const axis = fc.axisBottom(scale)
+  .decorate(s =>
+    s.enter().select('text')
+      .style('text-anchor', 'start')
+      .attr('transform', 'rotate(45 -10 10)')
+  );
+```
 
-<a name="date_pad" href="#date_pad"></a> *date*.**pad**([*values*])
+<img src="screenshots/offset.png"/>
 
-If *values* is specified, sets the amount of padding applied to the minimum and maximum values of the extent, to the specified array `[minPad, maxPad]` and returns this extent instance. The unit of these values is set by [padUnit](#date_padUnit).
-If *values* is not specified, returns the current array of padding values, which defaults `[0, 0]`.
+In the example below, the value bound to each tick is used to colour values greater than or equal to 100:
 
-<a name="date_padUnit" href="#date_padUnit"></a> *date*.**padUnit**([*value*])
+```
+const width = 400;
 
-If *value* is specified, sets the unit of the [pad](#date_pad) values applied to minimum and maximum values and returns this extent instance. Possible values are -
-* 'percent' - the default behavior of applying the values as a percentage of the extent e.g. pad values of `[0.5, 0.5]` would double the calculated extent.
-* 'domain' - the padding values specified in milliseconds are applied directly to the calculated extent.
-If *value* is not specified, returns the current array of padding unit, which defaults `percent`.
+const scale = d3.scaleLinear()
+  .domain([0, 140])
+  .range([margin, width - margin])
+  .nice();
 
-<a name="date_symmetricalAbout" href="#date_symmetricalAbout"></a> *date*.**symmetricalAbout**([*value*])
+const axis = fc.axisBottom(scale)
+  .decorate((s) =>
+    s.enter()
+      .select('text')
+      .style('fill', function(d) {
+          return d >= 100 ? 'red' : 'black';
+      });
+  );
+```
 
-If *value* is specified, sets the value around which the extent will be centered around and returns this extent instance. Can also be set to `null` to disable centering. Note this is applied before padding.
-If *value* is not specified, returns the current center value, which defaults `null`.
-
-<a name="date_include" href="#date_include"></a> *date*.**include**([*values*])
-
-If *values* is specified, sets the array of additional values to include within the calculated extent to the specified array and returns this extent instance.
-If *values* is not specified, returns the current array of included values, which defaults `[]`.
+<img src="screenshots/color.png"/>
